@@ -48,6 +48,25 @@ export default {
 					answer: result.text || 'N/A',
 				});
 			}
+			case 'JSON_MODE':
+			case 'JSON Mode': {
+				if (!env.DEV_SHOWDOWN_API_KEY) {
+					throw new Error('DEV_SHOWDOWN_API_KEY is required');
+				}
+
+				const workshopLlm = createWorkshopLlm(env.DEV_SHOWDOWN_API_KEY, interactionId);
+				const result = await generateText({
+					model: workshopLlm.chatModel('deli-4'),
+					system: 'Extract structured product information from a varied human-readable product description using deterministic validation.',
+					prompt: payload.question ?? payload.prompt,
+				});
+
+				try {
+					return Response.json(JSON.parse(result.text || '{}'));
+				} catch {
+					return new Response('no valid JSON', { status: 502 });
+				}
+			}
 				default:
 					return new Response('Solver not found', { status: 404 });
 			}
